@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.OrderDao">
+    <insert id="add" parameterType="com.demo.entity.Order" >
+        <selectKey keyProperty="id" order="AFTER" resultType="int">
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert into orders
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="order_code != null">
+                order_code,
+            </if>
+            <if test="address != null">
+                address,
+            </if>
+            <if test="receiver != null">
+                receiver,
+            </if>
+            <if test="mobile != null">
+                mobile,
+            </if>
+            <if test="create_date != null">
+                create_date,
+            </if>
+            <if test="pay_date != null">
+                pay_date,
+            </if>
+            <if test="delivery_date != null">
+                delivery_date,
+            </if>
+            <if test="confirm_date != null">
+                confirm_date,
+            </if>
+            <if test="user_id != null">
+                user_id,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="order_code != null">
+                #{order_code},
+            </if>
+            <if test="address != null">
+                #{address},
+            </if>
+            <if test="receiver != null">
+                #{receiver},
+            </if>
+            <if test="mobile != null">
+                #{mobile},
+            </if>
+            <if test="create_date != null">
+                #{create_date},
+            </if>
+            <if test="pay_date != null">
+                #{pay_date},
+            </if>
+            <if test="delivery_date != null">
+                #{delivery_date},
+            </if>
+            <if test="confirm_date != null">
+                #{confirm_date},
+            </if>
+            <if test="user_id>0">
+                #{user_id},
+            </if>
+            <if test="status>=0">
+                #{status},
+            </if>
+        </trim>
+    </insert>
+
+    <resultMap id="orders" type="com.demo.entity.Order">
+        <id column="id" property="id"/>
+        <result column="order_code"  property="order_code"/>
+        <result column="address"  property="address"/>
+        <result column="receiver"  property="receiver"/>
+        <result column="mobile"  property="mobile"/>
+        <result column="user_message"  property="user_message"/>
+        <result column="create_date"   property="create_date"/>
+        <result column="pay_date"   property="pay_date"/>
+        <result column="delivery_date"  property="delivery_date"/>
+        <result column="confirm_date"  property="confirm_date"/>
+        <result column="user_id" property="user_id"/>
+        <result column="status"  property="status"/>
+    </resultMap>
+    <select id="findAllOrder" resultMap="orders">
+        select  *from orders
+    </select>
+
+    <delete id="deleteById" parameterType="int">
+    delete from orders
+    where id = #{id}
+  </delete>
+
+    <update id="updateOrder" parameterType="com.demo.entity.Order">
+        update orders
+        <set>
+            <if test="order_code != null">
+                order_code = #{order_code},
+            </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
+            <if test="receiver != null">
+                receiver = #{receiver},
+            </if>
+            <if test="mobile != null">
+                mobile = #{mobile},
+            </if>
+            <if test="create_date != null">
+                create_date = #{create_date},
+            </if>
+            <if test="pay_date != null">
+                pay_date = #{pay_date},
+            </if>
+            <if test="delivery_date != null">
+                delivery_date = #{delivery_date},
+            </if>
+            <if test="confirm_date != null">
+                confirm_date = #{confirm_date},
+            </if>
+            <if test="user_id >0">
+                user_id = #{user_id},
+            </if>
+            <if test="status >=0">
+                status = #{status},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <resultMap id="findorder" type="com.demo.entity.Order">
+        <id column="id" property="id"></id>
+        <result column="order_code" property="order_code"></result>
+        <result column="address" property="address"></result>
+        <result column="receiver" property="receiver"></result>
+        <result column="mobile" property="mobile"></result>
+        <result column="create_date" property="create_date"></result>
+        <result column="pay_date" property="pay_date"></result>
+        <result column="delivery_date" property="delivery_date"></result>
+        <result column="confirm_date" property="confirm_date"></result>
+        <result column="status" property="status"></result>
+        <collection property="orderItems" javaType="java.util.List" ofType="com.demo.entity.orderItem">
+            <id column="id" property="id"></id>
+            <result column="product_id" property="product_id"></result>
+            <result column="order_id" property="order_id"></result>
+            <result column="number" property="number"></result>
+        </collection>
+    </resultMap>
+    <select id="findOrderByUser_id" resultMap="findorder">
+        select orders.*,order_item.* from orders,order_item where orders.id=order_item.order_id and user_id=#{user_id}
+    </select>
+
+    <resultMap id="getOrder" type="com.demo.entity.Order">
+        <id column="id" property="id"></id>
+        <result column="order_code" property="order_code"></result>
+        <result column="address" property="address"></result>
+        <result column="receiver" property="receiver"></result>
+        <result column="mobile" property="mobile"></result>
+        <result column="create_date" property="create_date"></result>
+        <result column="pay_date" property="pay_date"></result>
+        <result column="delivery_date" property="delivery_date"></result>
+        <result column="confirm_date" property="confirm_date"></result>
+        <result column="status" property="status"></result>
+        <association property="orderItems" select="com.demo.dao.OrderItemDao.selectOrderItem" column="id"></association>
+    </resultMap>
+    <select id="getOrderBuyId" resultMap="getOrder">
+        select * from orders where id=#{id}
+    </select>
+
+    <update id="updateStatus" parameterType="com.demo.entity.Order">
+        update orders
+        <set>
+        <if test="status >=0">
+            status = #{status},
+        </if>
+        <if test="delivery_date != null">
+            delivery_date = #{delivery_date},
+        </if>
+            <if test="confirm_date != null">
+                confirm_date = #{confirm_date},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+</mapper>

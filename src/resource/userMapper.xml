@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.userdao">
+    <resultMap id="selectUser" type="com.demo.entity.user">
+    <id column="id" property="id"></id>
+    <result column="username" property="username"></result>
+    <result column="password" property="password"></result>
+    <collection property="userDetail" ofType="com.demo.entity.userDetail">
+        <id column="id" property="id"></id>
+        <result column="nicheng" property="nicheng"></result>
+        <result column="email" property="email"></result>
+        <result column="role" property="role"></result>
+    </collection>
+    </resultMap>
+    <select id="login" resultMap="selectUser" parameterType="String">
+        select * from users,userdetail where users.id=userdetail.id and username = #{username} and password=#{password}
+    </select>
+
+    <insert id="zhuce" parameterType="com.demo.entity.user">
+        insert  into  users (username,password) values
+            (#{username},#{password})
+    </insert>
+
+    <select id="getUserByName" resultType="com.demo.entity.user">
+        select * from users
+         where
+           username=#{username}
+    </select>
+
+    <select id="getUserById" resultType="com.demo.entity.user">
+        select * from users
+         where
+           id=#{id}
+    </select>
+
+    <resultMap id="allUsers" type="com.demo.entity.user">
+    <id column="id" property="id"></id>
+    <result column="username" property="username"></result>
+    <collection property="userDetail" ofType="com.demo.entity.userDetail">
+        <id column="id" property="id"></id>
+        <result column="nicheng" property="nicheng"></result>
+        <result column="email" property="email"></result>
+    </collection>
+    </resultMap>
+    <select id="getalluser" resultMap="allUsers">
+        select users.id,users.username,userdetail.email,userdetail.nicheng from users,userdetail where users.id=userdetail.id and role='0';
+    </select>
+
+    <update id="updateInfo" parameterType="com.demo.entity.user">
+        update users
+        <set>
+            <if test='password!=null and password != ""'>
+                password=#{password},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <delete id="deleteUser" >
+        delete from users where id in
+        <foreach collection="array" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+    <resultMap id="selectUserByEmail" type="com.demo.entity.user">
+        <id column="id" property="id"></id>
+        <result column="username" property="username"></result>
+        <result column="password" property="password"></result>
+    </resultMap>
+    <select id="getUserByemail" resultMap="selectUserByEmail" parameterType="String">
+        select users.* from users,userdetail where users.id=userdetail.id and email = #{email}
+    </select>
+</mapper>

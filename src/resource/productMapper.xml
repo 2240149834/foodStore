@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.ProductDao">
+    <select id="searchProduct" resultType="com.demo.entity.Product" parameterType="String">
+        select * from products
+        <where>
+            <if test="name != null">
+                name like "%"#{name}"%"
+            </if>
+        </where>
+
+    </select>
+    <select id="getAllProduct" resultType="com.demo.entity.Product">
+        select * from products
+    </select>
+
+    <select id="getProduct" resultType="com.demo.entity.Product" parameterType="int">
+        select * from products where id=#{id}
+    </select>
+
+    <delete id="deleteProduct" parameterType="int">
+        delete from products where id=#{id}
+    </delete>
+
+    <insert id="addProduct" parameterType="com.demo.entity.Product">
+        insert into products(name,price,type,pnum,imgurl,description) values (#{name},#{price},#{type},#{pnum},#{imgurl},#{description})
+    </insert>
+    <update id="updatePnum" parameterType="com.demo.entity.Product">
+        update products
+        <set>
+            <if test="pnum >0">
+                pnum = #{pnum},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>

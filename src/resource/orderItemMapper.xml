@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.OrderItemDao">
+    <insert id="addItem"  parameterType="com.demo.entity.orderItem">
+    insert into order_item (product_id, order_id,number)
+    values (#{product_id}, #{order_id},#{number})
+  </insert>
+
+    <delete id="deleteOrderItem">
+        delete from order_item where order_id in
+        <foreach collection="array" open="(" close=")" separator="," item="item">
+              #{item}
+        </foreach>
+     </delete>
+
+    <resultMap id="orderItem" type="com.demo.entity.orderItem">
+        <id column="id" property="id"></id>
+        <result column="number" property="number"></result>
+        <result column="product_id" property="product_id"></result>
+    </resultMap>
+    <select id="findOrderItem" resultMap="orderItem">
+        select order_item.id,order_item.number,order_item.product_id from orders,order_item where orders.id=order_item.order_id and orders.id=#{id}
+    </select>
+
+    <select id="selectOrderItem" resultType="com.demo.entity.orderItem">
+        select * from order_item where order_id=#{id}
+    </select>
+</mapper>

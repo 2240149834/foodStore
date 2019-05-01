@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.userDetailDao">
+    <insert id="addUserDetail" parameterType="com.demo.entity.userDetail">
+        insert into userdetail
+        (id,
+        nicheng,
+        email,
+        role)
+             values
+            (#{id},
+            #{nicheng},
+            #{email},
+            #{role})
+    </insert>
+    <resultMap id="userDetail" type="com.demo.entity.userDetail">
+        <id column="id" property="id"></id>
+        <result column="nicheng" property="nicheng"></result>
+        <result column="email" property="email"></result>
+        <result column="role" property="role"></result>
+    </resultMap>
+    <select id="getUserDetailById" resultMap="userDetail">
+        select * from userdetail where id=#{id}
+    </select>
+    <update id="updateInfo" parameterType="com.demo.entity.userDetail">
+        update userdetail
+        <set>
+            <if test='nicheng!=null and nicheng != ""'>
+                nicheng=#{nicheng},
+            </if>
+            <if test='email!=null and email != ""'>
+                email=#{email},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <delete id="deleteUser">
+        delete from userdetail where id in
+        <foreach collection="array" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>
