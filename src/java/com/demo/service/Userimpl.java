@@ -1,6 +1,7 @@
 package com.demo.service;
 
 import com.demo.dao.userdao;
+import com.demo.entity.glyuan;
 import com.demo.entity.user;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,15 @@ public class Userimpl implements userservice {
             return currentUser;
         }
         return currentUser;
+    }
+
+    @Override
+    public glyuan gllogin(String username, String password) {
+        glyuan glyuan = userdao.gllogin(username,password);
+        if (glyuan!=null){
+            return glyuan;
+        }
+        return glyuan;
     }
 
     @Override

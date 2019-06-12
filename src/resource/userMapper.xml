@@ -72,4 +72,8 @@
     <select id="getUserByemail" resultMap="selectUserByEmail" parameterType="String">
         select users.* from users,userdetail where users.id=userdetail.id and email = #{email}
     </select>
+
+    <select id="gllogin" resultType="com.demo.entity.glyuan" parameterType="String">
+        select *from glyuan where username=#{username} and password=#{password}
+    </select>
 </mapper>

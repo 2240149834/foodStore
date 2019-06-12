@@ -145,15 +145,9 @@
         <result column="delivery_date" property="delivery_date"></result>
         <result column="confirm_date" property="confirm_date"></result>
         <result column="status" property="status"></result>
-        <collection property="orderItems" javaType="java.util.List" ofType="com.demo.entity.orderItem">
-            <id column="id" property="id"></id>
-            <result column="product_id" property="product_id"></result>
-            <result column="order_id" property="order_id"></result>
-            <result column="number" property="number"></result>
-        </collection>
     </resultMap>
     <select id="findOrderByUser_id" resultMap="findorder">
-        select orders.*,order_item.* from orders,order_item where orders.id=order_item.order_id and user_id=#{user_id}
+        select * from orders where user_id=#{user_id}
     </select>
 
     <resultMap id="getOrder" type="com.demo.entity.Order">
@@ -171,6 +165,23 @@
     </resultMap>
     <select id="getOrderBuyId" resultMap="getOrder">
         select * from orders where id=#{id}
+    </select>
+
+    <resultMap id="getOrderCode" type="com.demo.entity.Order">
+        <id column="id" property="id"></id>
+        <result column="order_code" property="order_code"></result>
+        <result column="address" property="address"></result>
+        <result column="receiver" property="receiver"></result>
+        <result column="mobile" property="mobile"></result>
+        <result column="create_date" property="create_date"></result>
+        <result column="pay_date" property="pay_date"></result>
+        <result column="delivery_date" property="delivery_date"></result>
+        <result column="confirm_date" property="confirm_date"></result>
+        <result column="status" property="status"></result>
+        <association property="orderItems" select="com.demo.dao.OrderItemDao.selectOrderItem" column="id"></association>
+    </resultMap>
+    <select id="getOrderByorderCode" resultMap="getOrderCode">
+        select * from orders where order_code=#{orderCode}
     </select>
 
     <update id="updateStatus" parameterType="com.demo.entity.Order">

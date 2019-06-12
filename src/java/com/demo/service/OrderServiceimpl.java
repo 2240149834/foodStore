@@ -9,7 +9,6 @@ import com.demo.entity.orderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -105,5 +104,14 @@ public class OrderServiceimpl implements OrderService {
             return  true;
         }
         return false;
+    }
+
+    @Override
+    public Order getOrderByorderCode(String orderCode) {
+        Order order=orderDao.getOrderByorderCode(orderCode);
+        if (order!=null){
+            return order;
+        }
+        return null;
     }
 }

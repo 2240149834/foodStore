@@ -18,7 +18,7 @@
   </head>
   <body>
     <!--导航栏部分-->
-    <jsp:include page="header.jsp"/>
+    <jsp:include page="glhead.jsp"/>
 
     <!-- 中间内容 -->
     <div class="container-fluid">

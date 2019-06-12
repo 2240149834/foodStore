@@ -1,5 +1,6 @@
 package com.demo.dao;
 
+import com.demo.entity.glyuan;
 import com.demo.entity.user;
 import org.apache.ibatis.annotations.Param;
 
@@ -7,6 +8,7 @@ import java.util.List;
 
 public interface userdao {
      user login(@Param("username") String username, @Param("password") String password);
+     glyuan gllogin(@Param("username") String username, @Param("password") String password);
      int zhuce(user user);
      user getUserByName(@Param("username") String username);
      List<user> getalluser();

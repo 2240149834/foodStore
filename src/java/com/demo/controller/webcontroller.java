@@ -2,19 +2,27 @@ package com.demo.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.internal.util.AlipaySignature;
+import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.demo.entity.*;
 import com.demo.service.OrderService;
 import com.demo.service.ProductService;
 import com.demo.service.userservice;
 import com.demo.service.userdetail;
+import com.demo.until.AlipayConfig;
 import com.demo.until.Code;
 import com.demo.until.ordertime;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
@@ -41,7 +49,7 @@ public class webcontroller {
 
     @RequestMapping(value = "/login")
     @ResponseBody
-    public Map<String, Object> login(String verifyCode, String username, String password, HttpSession httpSession, String remember, HttpServletResponse httpServletResponse) {
+    public Map<String, Object> login(String verifyCode, String username, String password, HttpSession httpSession) {
         Map map = new HashMap();
         String result;
         String code = (String) httpSession.getAttribute("code");
@@ -52,6 +60,27 @@ public class webcontroller {
             if (user != null) {
                 result = "success";
                 httpSession.setAttribute("currentUser", user);
+            } else {
+                result = "fail";
+            }
+        }
+        map.put("message", result);
+        return map;
+    }
+
+    @RequestMapping(value = "/gllogin")
+    @ResponseBody
+    public Map<String, Object> gllogin(String verifyCode, String username, String password, HttpSession httpSession) {
+        Map map = new HashMap();
+        String result;
+        String code = (String) httpSession.getAttribute("code");
+        if (!verifyCode.equalsIgnoreCase(code)) {
+            result = "wrong";
+        } else {
+            glyuan glyuan = userservice.gllogin(username, password);
+            if (glyuan != null) {
+                result = "success";
+                httpSession.setAttribute("currentUser", glyuan);
             } else {
                 result = "fail";
             }
@@ -379,7 +408,7 @@ public class webcontroller {
                 // 获取图片原始文件名
                 String originalFilename = productImgUpload.getOriginalFilename();
                 File fileFolder = new File(fileRealPath);
-                System.out.println("fileRealPath=" + fileRealPath + "/" + originalFilename);
+//                System.out.println("fileRealPath=" + fileRealPath + "/" + originalFilename);
                 if (!fileFolder.exists()) {
                     fileFolder.mkdirs();
                 }
@@ -434,31 +463,38 @@ public class webcontroller {
 
     @RequestMapping(value = "createOrder")
     @ResponseBody
-    public Map createOrder(String message,HttpSession session, String[] productIds, String[] counts, String name, String address, String phone, HttpServletRequest request) {
+    public Map createOrder(String message,HttpSession session, String[] productIds, String[] counts, String name, String address, String phone, String orderCode) {
         //创建订单
+        Map map = new HashMap();
         user user = (user) session.getAttribute("currentUser");
-        Order order = new Order();
-        // 补全字段
-        order.setOrder_code(ordertime.getOrderIdByTime());
-        order.setCreate_date(new Date());
-        order.setStatus(0);
-        order.setReceiver(name);
-        order.setMobile(phone);
-        order.setAddress(address);
-        order.setUser_id(user.getId());
-        List<orderItem> list = new ArrayList();
-        for (int i = 0; i < productIds.length; i++) {
-            orderItem orderItem = new orderItem();
-            orderItem.setProduct_id(Integer.parseInt(productIds[i]));
-            Product product = productService.getProduct(orderItem.getProduct_id());
-            orderItem.setProduct(product);
-            orderItem.setNumber(Integer.parseInt(counts[i]));
-            // 订单项加入list集合
-            list.add(orderItem);
+        if (orderCode==null||orderCode.equals("")) {
+            System.out.println("===========================================================");
+            Order order = new Order();
+            // 补全字段
+            order.setOrder_code(ordertime.getOrderIdByTime());
+            order.setCreate_date(new Date());
+            order.setStatus(0);
+            order.setReceiver(name);
+            order.setMobile(phone);
+            order.setAddress(address);
+            order.setUser_id(user.getId());
+            List<orderItem> list = new ArrayList();
+            for (int i = 0; i < productIds.length; i++) {
+                orderItem orderItem = new orderItem();
+                orderItem.setProduct_id(Integer.parseInt(productIds[i]));
+                Product product = productService.getProduct(orderItem.getProduct_id());
+                orderItem.setProduct(product);
+                orderItem.setNumber(Integer.parseInt(counts[i]));
+                // 订单项加入list集合
+                list.add(orderItem);
+            }
+            order.setOrderItems(list);
+            // 添加订单和订单项
+            orderService.addOrder(order);
+            session.setAttribute("creatorderr", order.getOrder_code());
+        }else {
+            session.setAttribute("creatorderr", orderCode);
         }
-        order.setOrderItems(list);
-        // 添加订单和订单项
-        String result = orderService.addOrder(order);
         //判断是直接购买还是从购物车购买
         if (message!=null||!message.equals("")) {
             //删除购物车中已结算的商品
@@ -474,36 +510,37 @@ public class webcontroller {
                 }
             }
         }
-        Map map = new HashMap();
-        if (result.equals("success")) {
-            session.setAttribute("orderItemList", list);
             map.put("result", "success");
             return map;
-        }
-        return map;
     }
 
     // 查看我的订单
     @RequestMapping(value = "findMyOrder")
     @ResponseBody
-    public Map findMyOrder(HttpSession session) {
+    public Map findMyOrder(@RequestParam(defaultValue="1") Integer page,HttpSession session) {
         /**
-         * 1、用户已经登录，从session中获取用户信息，从用户信息中得到user_id 2、调用方法得到用户的订单的集合
-         * 3、通过请求转发将订单集合显示在myorder.jsp页面上
+         * 用户已经登录，从session中获取用户信息，从用户信息中得到user_id ,调用方法得到用户的订单的集合
+         *
          */
+        if (page==0){
+            page++;
+        }
+        PageHelper.startPage(page, 5);
         user user = (user) session.getAttribute("currentUser");
         int user_id = user.getId();
         List<Order> list = orderService.findMyOrder(user_id);
-        for (int i = 0; i < list.size(); i++) {
-            List<orderItem> itemslist = list.get(i).getOrderItems();
-            for (int j = 0; j < itemslist.size(); j++) {
-                Product product = productService.getProduct(itemslist.get(j).getProduct_id());
-                itemslist.get(j).setProduct(product);
-            }
-        }
+//        for (int i = 0; i < list.size(); i++) {
+//            List<orderItem> itemslist = list.get(i).getOrderItems();
+//            for (int j = 0; j < itemslist.size(); j++) {
+//                Product product = productService.getProduct(itemslist.get(j).getProduct_id());
+//                itemslist.get(j).setProduct(product);
+//            }
+//        }
+        PageInfo<Order> p=new PageInfo<>(list);
         Map map = new HashMap();
         if (list != null) {
-            session.setAttribute("myorderList", list);
+//            session.setAttribute("myorderList", list);
+            session.setAttribute("page",p);
             map.put("result", "success");
             return map;
         }
@@ -551,59 +588,186 @@ public class webcontroller {
         return map;
     }
 
-    @RequestMapping(value = "payed")
+    @RequestMapping(value = "/goAlipay", produces = "text/html; charset=UTF-8")
     @ResponseBody
-    /**
-     * 支付成功时
-     */
-    public Map payed(String[] order_id) {
-        // 更新订单信息
-        Order order = orderService.getOrderBuyId(Integer.parseInt(order_id[0]));
-        order.setStatus(1);
-        order.setPay_date(new Date());
+    public String goAlipay(HttpSession session) throws Exception {
+        String ordercode= (String) session.getAttribute("creatorderr");
+        Order order = orderService.getOrderByorderCode(ordercode);
         List<orderItem> list = order.getOrderItems();
-        Map map = new HashMap();
-        //更新库存
+        double sum=0;
         for (int i = 0; i < list.size(); i++) {
             orderItem orderItem = list.get(i);
             Product product = orderService.getProductBuyId(orderItem.getProduct_id());
-            if (product.getPnum() - orderItem.getNumber()<0){
-                map.put("result", "fail");
-                return  map;
+            sum+=product.getPrice()*orderItem.getNumber();
             }
-            product.setPnum(product.getPnum() - orderItem.getNumber());
-            orderItem.setProduct(product);
+        //获得初始化的AlipayClient
+        AlipayClient alipayClient = new DefaultAlipayClient(AlipayConfig.gatewayUrl, AlipayConfig.app_id, AlipayConfig.merchant_private_key, "json", AlipayConfig.charset, AlipayConfig.alipay_public_key, AlipayConfig.sign_type);
+
+        //设置请求参数
+        AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
+        alipayRequest.setReturnUrl(AlipayConfig.return_url);
+        alipayRequest.setNotifyUrl(AlipayConfig.notify_url);
+
+        //商户订单号，商户网站订单系统中唯一订单号，必填
+        String out_trade_no = order.getOrder_code();
+        //付款金额，必填
+        String total_amount = sum+"";
+        //订单名称，必填
+        String subject = "商品支付订单";
+        //商品描述，可空
+        String body = "";
+
+        // 该笔订单允许的最晚付款时间，逾期将关闭交易。取值范围：1m～15d。m-分钟，h-小时，d-天，1c-当天（1c-当天的情况下，无论交易何时创建，都在0点关闭）。 该参数数值不接受小数点， 如 1.5h，可转换为 90m。
+        String timeout_express = "1c";
+
+        alipayRequest.setBizContent("{\"out_trade_no\":\""+ out_trade_no +"\","
+                + "\"total_amount\":\""+ total_amount +"\","
+                + "\"subject\":\""+ subject +"\","
+                + "\"body\":\""+ body +"\","
+                + "\"timeout_express\":\""+ timeout_express +"\","
+                + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");
+
+        //请求
+        String result = alipayClient.pageExecute(alipayRequest).getBody();
+        System.out.println(result);
+        return result;
+    }
+
+    /**
+     * @Description: 支付宝同步通知页面
+     */
+    @RequestMapping(value = "alipayReturnNotice")
+    public ModelAndView alipayReturnNotice(HttpServletRequest request) throws Exception {
+        log.info("--------------------------------------------支付成功, 进入同步通知接口-----------------------------------------------------");
+        //获取支付宝GET过来反馈信息
+        Map<String,String> params = new HashMap<String,String>();
+        Map<String,String[]> requestParams = request.getParameterMap();
+        for (Iterator<String> iter = requestParams.keySet().iterator(); iter.hasNext();) {
+            String name =iter.next();
+            String[] values = requestParams.get(name);
+            String valueStr = "";
+            for (int i = 0; i < values.length; i++) {
+                valueStr = (i == values.length - 1) ? valueStr + values[i]
+                        : valueStr + values[i] + ",";
+            }
+            //乱码解决，这段代码在出现乱码时使用
+            valueStr = new String(valueStr.getBytes("ISO-8859-1"), "utf-8");
+            params.put(name, valueStr);
         }
-        if (orderService.updateOrder(order)) {
-            map.put("result", "success");
-            return map;
+        ModelAndView mv = new ModelAndView("myOrder");
+        boolean signVerified = false;
+        try{
+            signVerified = AlipaySignature.rsaCheckV1(params, AlipayConfig.alipay_public_key, AlipayConfig.charset, AlipayConfig.sign_type); //调用SDK验证签名
+        }catch (Exception e) {
+            System.out.println("SDK验证签名出现异常");
         }
-        return map;
+        //——请在这里编写您的程序（以下代码仅作参考）——
+        if(signVerified) {
+            //商户订单号
+            String out_trade_no = new String(request.getParameter("out_trade_no").getBytes("ISO-8859-1"),"UTF-8");
+
+            //付款金额
+            String total_amount = new String(request.getParameter("total_amount").getBytes("ISO-8859-1"),"UTF-8");
+            Order order=orderService.getOrderByorderCode(out_trade_no);
+            order.setStatus(1);
+            order.setPay_date(new Date());
+            List<orderItem> list = order.getOrderItems();
+            Map map = new HashMap();
+            //更新库存
+            for (int i = 0; i < list.size(); i++) {
+                orderItem orderItem = list.get(i);
+                Product product = orderService.getProductBuyId(orderItem.getProduct_id());
+                product.setPnum(product.getPnum() - orderItem.getNumber());
+                orderItem.setProduct(product);
+            }
+            if (orderService.updateOrder(order)) {
+                map.put("result", "success");
+
+            }
+        }else {
+            log.info("支付, 验签失败...");
+        }
+
+        return mv;
+    }
+
+    /**
+     * @Description: 支付宝异步 通知页面
+     */
+    @RequestMapping(value = "alipayNotifyNotice")
+    @ResponseBody
+    public String alipayNotifyNotice(HttpServletRequest request) throws Exception {
+
+        log.info("支付成功, 进入异步通知接口...");
+
+        //获取支付宝POST过来反馈信息
+        Map<String,String> params = new HashMap<String,String>();
+        Map<String,String[]> requestParams = request.getParameterMap();
+        for (Iterator<String> iter = requestParams.keySet().iterator(); iter.hasNext();) {
+            String name = iter.next();
+            String[] values = requestParams.get(name);
+            String valueStr = "";
+            for (int i = 0; i < values.length; i++) {
+                valueStr = (i == values.length - 1) ? valueStr + values[i]
+                        : valueStr + values[i] + ",";
+            }
+            //乱码解决，这段代码在出现乱码时使用
+//			valueStr = new String(valueStr.getBytes("ISO-8859-1"), "utf-8");
+            params.put(name, valueStr);
+        }
+
+        boolean signVerified = AlipaySignature.rsaCheckV1(params, AlipayConfig.alipay_public_key, AlipayConfig.charset, AlipayConfig.sign_type); //调用SDK验证签名
+
+        //——请在这里编写您的程序（以下代码仅作参考）——
+
+		/* 实际验证过程建议商户务必添加以下校验：
+		1、需要验证该通知数据中的out_trade_no是否为商户系统中创建的订单号，
+		2、判断total_amount是否确实为该订单的实际金额（即商户订单创建时的金额），
+		3、校验通知中的seller_id（或者seller_email) 是否为out_trade_no这笔单据的对应的操作方（有的时候，一个商户可能有多个seller_id/seller_email）
+		4、验证app_id是否为该商户本身。
+		*/
+        if(signVerified) {//验证成功
+            log.info("支付成功...");
+
+        }else {//验证失败
+            log.info("支付, 验签失败...");
+        }
+        return "success";
     }
 
     @RequestMapping(value = "orderPay")
     public String orderPay(int id, HttpSession session) {
-        session.removeAttribute("orderItemList");
+        session.removeAttribute("productList");
         Order order = orderService.getOrderBuyId(id);
         List<orderItem> list = order.getOrderItems();
+        Map map=new HashMap();
         for (int i = 0; i < list.size(); i++) {
             orderItem orderItem = list.get(i);
             Product product = orderService.getProductBuyId(orderItem.getProduct_id());
+            map.put(product,orderItem.getNumber());
             orderItem.setProduct(product);
         }
         if (list != null) {
-            session.setAttribute("orderItemList", list);
+            session.setAttribute("creatorders", order.getOrder_code());
+            session.setAttribute("productList",map);
         }
-        return "pay";
+        return "buyPage";
     }
 
     @RequestMapping(value = "findAllOrder")
-    public String findAllOrder(HttpSession session) {
+    public String findAllOrder(HttpSession session,@RequestParam(defaultValue="1") int page) {
         /**
          * 查询全部用户订单
          */
+        if (page==0){
+            page++;
+        }
+        System.out.println("page的值为"+page);
+        PageHelper.startPage(page, 8);
         List<Order> list = orderService.findAllOrder();
-        session.setAttribute("allorders", list);
+        PageInfo<Order> p=new PageInfo<>(list);
+//        session.setAttribute("allorders", list);
+        session.setAttribute("pageO",p);
         return "listOrder";
     }
 

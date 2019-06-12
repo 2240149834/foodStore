@@ -86,16 +86,16 @@
             user.password = document.getElementById("inputPassword").value;
             user.verifyCode=$("#verifyCode").val();
             if (user.username== "") {
-                alert("请输入用户名");
+                layer.msg('请输入用户名',{icon:2});
                 return false;
             }
 
             if (user.password== "") {
-                alert("请输入密码");
+                layer.msg('请输入密码',{icon:2});
                 return false;
             }
             if (user.verifyCode== "") {
-                alert("请输入验证码");
+                layer.msg('请输入验证码',{icon:2});
                 return false;
             }
             $.ajax({
@@ -152,7 +152,7 @@
             <div class="form-group">
                 <label for="inputEmail" class="col-sm-2 col-md-2 control-label">邮箱/用户名</label>
                 <div class="col-sm-8 col-md-3">
-                    <input type="text" class="form-control" id="inputEmail" placeholder="请输入邮箱或用户名"/>
+                    <input type="text" class="form-control" id="inputEmail" placeholder="请输入用户名"/>
                 </div>
             </div>
             <div class="form-group">

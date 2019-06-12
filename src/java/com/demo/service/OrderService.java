@@ -16,4 +16,5 @@ public interface OrderService {
     Order getOrderBuyId(int Order_id);
     Product getProductBuyId(int product_id);
     boolean updateStatus(Order order);
+    Order getOrderByorderCode(String orderCode);
 }

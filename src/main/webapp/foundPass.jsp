@@ -71,7 +71,7 @@
             layer.msg('密码不能为空',{icon:2});
             return;
         }
-        if(user.password.length>= 20){
+        if(user.password.length<= 6){
             layer.msg('密码长度不能超过20个字符',{icon:2});
             return;
         }

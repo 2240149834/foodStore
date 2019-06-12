@@ -19,7 +19,6 @@
     div.jumbotron{
         width: 1000px;
         margin-left: 440px;
-        background-color: aliceblue;
     }
     div.aliPayPageDiv{
         text-align: center;
@@ -100,7 +99,7 @@
 <body>
 <jsp:include page="header.jsp"/>
 <div class="jumbotron">
-    <h2 align="center">推荐使用支付宝</h2>
+    <h2 align="center">订单支付页面</h2>
 </div>
 <div class="aliPayPageDiv">
     <div class="aliPayPageLogo">

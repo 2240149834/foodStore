@@ -13,6 +13,14 @@
     <script src="js/jquery.min.js" type="text/javascript"></script>
     <script src="js/bootstrap.min.js" type="text/javascript"></script>
 </head>
+<style>
+    a.disabled {
+        pointer-events: none;
+        filter: alpha(opacity=50); /*IE滤镜，透明度50%*/
+        -moz-opacity: 0.5; /*Firefox私有，透明度50%*/
+        opacity: 0.5; /*其他，透明度50%*/
+    }
+</style>
 <script type="text/javascript">
     function orderDelivery(id) {
         $.ajax({
@@ -23,8 +31,8 @@
             dataType : 'json',
             success : function(result) {
                 if (result.result!=null){
-                    alert("成功发货");
                     window.location.href="findAllOrder";
+                    layer.alert("成功发货",{icon:1,time:3000});
                 }
             },
             error : function() {
@@ -42,8 +50,8 @@
             dataType : 'json',
             success : function(result) {
                 if (result.result!=null){
-                    alert("您已拒绝买家的申请");
                     window.location.href="findAllOrder";
+                    layer.alert("您已拒绝买家的申请",{icon:1,time:3000});
                 }
             },
             error : function() {
@@ -61,8 +69,8 @@
             dataType : 'json',
             success : function(result) {
                 if (result.result!=null){
-                    alert("您已同意买家的申请");
                     window.location.href="findAllOrder";
+                    layer.alert("您已同意买家的申请",{icon:1,time:3000});
                 }
             },
             error : function() {
@@ -72,7 +80,7 @@
     }
 </script>
 <body>
-<jsp:include page="header.jsp"/>
+<jsp:include page="glhead.jsp"/>
 <div id="wrapper">
 
     <!-- /. NAV SIDE  -->
@@ -115,7 +123,7 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <c:forEach items="${allorders}" var="o">
+                                    <c:forEach items="${pageO.list}" var="o">
                                         <tr>
                                             <td>${o.order_code}</td>
                                             <td><a href="findOrderItem?id=${o.id}">点击查看</a></td>
@@ -167,7 +175,26 @@
                                     </tbody>
                                 </table>
                             </div>
-
+                            <div class="center">
+                                第${pageO.pageNum}/${pageO.pages}页,共${pageO.total}条数据
+                                <a href="findAllOrder">首页</a>
+                                <c:if test="${pageO.isFirstPage}">
+                                <a href="" class="disabled">上一页</a>
+                                </c:if>
+                                <c:if test="${!pageO.isFirstPage}">
+                                    <a href="findAllOrder?page=${pageO.prePage}">上一页</a>
+                                </c:if>
+                                <c:forEach items="${pageO.navigatepageNums}" var="navigatepageNums">
+                                    <a href="findAllOrder?page=${navigatepageNums}">${navigatepageNums}</a>
+                                </c:forEach>
+                                <c:if test="${pageO.isLastPage}">
+                                <a href="" class="disabled">下一页</a>
+                                </c:if>
+                                <c:if test="${!pageO.isLastPage}">
+                                    <a href="findAllOrder?page=${pageO.nextPage}">下一页</a>
+                                </c:if>
+                                <a href="findAllOrder?page=${pageO.lastPage}">尾页</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -175,7 +202,6 @@
 
         </div>
     </div>
-    <!-- /. PAGE WRAPPER  -->
 </div>
 </body>
 </html>

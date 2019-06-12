@@ -24,4 +24,6 @@ public interface OrderDao {
 
     Product getProductBuyId(int product_id);
     int updateStatus(Order order);
+
+    Order getOrderByorderCode(String orderCode);
 }

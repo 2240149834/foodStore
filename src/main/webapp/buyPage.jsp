@@ -31,15 +31,18 @@
             var add=document.getElementById("address").value;
             if (add=="") {
                 layer.msg("请填写详细地址");
+                return false;
             }
             var address=province+City+Area+add;
             var name=document.getElementById("name").value;
             if (name=="") {
                 layer.msg("请填写收货人");
+                return false;
             }
             var phone=document.getElementById("phone").value;
             if (phone=="") {
                 layer.msg("请填写收货人电话");
+                return false;
             }
             var productIds=new Array();
             <c:forEach items="${productList}" var="p">
@@ -50,21 +53,38 @@
             <c:forEach items="${productList}" var="p">
             counts.push("${p.value}"); //js中可以使用此标签，将EL表达式中的值push到数组中
             </c:forEach>
-            console.log(add);
+
+            var orderCode="${creatorders}";
             $.ajax({
                 async : false, //设置同步
                 type : 'POST',
                 url : 'createOrder',
-                data :{"message":"message","address":address,"name":name,"phone":phone,"productIds":productIds.toString(),"counts":counts.toString()},
+                data :{"message":"message","address":address,"name":name,"phone":phone,"productIds":productIds.toString(),"counts":counts.toString(),"orderCode":orderCode},
                 dataType : 'json',
                 success : function(result) {
                     if (result.result!=null) {
-                        window.location.href = "pay.jsp";
+                        comPay();
                     }else {
                         layer.alert("发生异常");
                     }
                 },
             });
+        }
+        function comPay() {
+            $.ajax({
+                async : false, //设置同步
+                type : 'POST',
+                url : 'goAlipay',
+                data :{},
+                dataType : 'html',
+                success : function(result) {
+                    const div = document.createElement('div');
+                    div.innerHTML = result; // html code
+                    document.body.appendChild(div);
+                    document.forms[0].submit();
+                },
+            });
+
         }
     </script>
 </head>

@@ -21,6 +21,12 @@
             width: 1000px;
             margin-left: 440px;
         }
+        a.disabled {
+            pointer-events: none;
+            filter: alpha(opacity=50); /*IE滤镜，透明度50%*/
+            -moz-opacity: 0.5; /*Firefox私有，透明度50%*/
+            opacity: 0.5; /*其他，透明度50%*/
+        }
     </style>
     <script type="text/javascript">
 
@@ -70,7 +76,7 @@
                 dataType : 'json',
                 success : function(result) {
                     if (result.result!=null) {
-                        layer.msg('已收货', {icon: 1,time: 1000});
+                        layer.msg('已收货', {icon: 1,time: 2000});
                     }
                 },
                 error : function() {
@@ -102,7 +108,7 @@
             </tr>
             </thead>
             <tbody >
-                <c:forEach items="${myorderList}" var="order">
+                <c:forEach items="${page.list}" var="order">
                     <tr>
                         <td>${order.order_code }</td>
                         <td>
@@ -116,7 +122,7 @@
                             待发货
                            </c:if>
                             <c:if test="${order.status==2}">
-                                <button class="btn-danger btn" onclick="comfire(${order.id})">确认收货</button>
+                                运输中
                             </c:if>
                             <c:if test="${order.status==3}">
                                 交易完成
@@ -127,8 +133,11 @@
                         </td>
 
                         <td>
-                            <c:if test="${order.status<2}">
-                            <button class="btn-danger btn" onclick="quxiaoOrder(${order.id})" >申请取消订单</button>
+                            <c:if test="${order.status==2}">
+                                <button class="btn-info btn" onclick="comfire(${order.id})">确认收货</button>
+                            </c:if>
+                            <c:if test="${order.status==0}">
+                            <button class="btn-danger btn" onclick="quxiaoOrder(${order.id})" >申请取消</button>
                             </c:if>
                             <c:if test="${order.status==3}">
                                 <button class="btn-danger btn" onclick="deleteOrder(${order.id})" >删除订单</button>
@@ -141,7 +150,26 @@
 
         </table>
            </div>
-
+           <div class="center">
+               第${page.pageNum}/${page.pages}页,共${page.total}条数据
+               <a href="#" onclick="allOrders1()">首页</a>
+               <c:if test="${page.isFirstPage}">
+                   <a href="" class="disabled">上一页</a>
+               </c:if>
+               <c:if test="${!page.isFirstPage}">
+                   <a href="#" onclick="allOrders1(${page.prePage})">上一页</a>
+               </c:if>
+               <c:forEach items="${page.navigatepageNums}" var="navigatepageNums">
+                   <a href="#" onclick="allOrders1(${navigatepageNums})">${navigatepageNums}</a>
+               </c:forEach>
+               <c:if test="${page.isLastPage}">
+                   <a href="" class="disabled">下一页</a>
+               </c:if>
+               <c:if test="${!page.isLastPage}">
+                   <a href="#" onclick="allOrders1(${page.nextPage})">下一页</a>
+               </c:if>
+               <a href="#" onclick="allOrders1(${page.lastPage})">尾页</a>
+           </div>
        </div>
 </div>
 <script type="text/javascript">
@@ -153,6 +181,24 @@
             type : 'POST',
             url : 'findMyOrder',
             data :nothing,
+            dataType : 'json',
+            success : function(result) {
+                if (result.result!=null) {
+                    $("#autore").load(location.href + " #autore");
+                }
+            },
+            error : function() {
+                layer.alert('服务器异常');
+            }
+        });
+    }
+
+    function allOrders1(page){
+        $.ajax({
+            async : false, //设置同步
+            type : 'POST',
+            url : 'findMyOrder',
+            data :{"page":page},
             dataType : 'json',
             success : function(result) {
                 if (result.result!=null) {

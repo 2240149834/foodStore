@@ -35,23 +35,25 @@
                     <li><a href="index.jsp" methods="post">登录</a></li>
                 </c:if>
                 <c:if test="${not empty currentUser}">
-                    <c:if test="${currentUser.userDetail.role == 1}">
-                        <li><a href="control.jsp" methods="post">管理员</a></li>
-                    </c:if>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                ${currentUser.userDetail.nicheng}
+                                <c:if test="${not empty currentUser}">
+                                    ${currentUser.userDetail.nicheng}
+                                </c:if>
+                            <c:if test="${currentUser.userDetail=null}">
+                                管理员
+                            </c:if>
                             <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <c:if test="${currentUser.userDetail.role != 1}">
+                            <c:if test="${currentUser.userDetail.role != null}">
                             <li><a href="shoopingCar.jsp">购物车</a></li>
                             <li><a href="#" onclick="findOrder()">我的订单</a></li>
                             </c:if>
-                            <c:if test="${currentUser.userDetail.role == 1}">
+                            <c:if test="${currentUser.userDetail.role =null}">
                                 <li><a href="findAllOrder">处理订单</a></li>
-                            </c:if>
                             <li><a href="setInfo.jsp">个人资料修改</a></li>
+                            </c:if>
                             <li><a href="exit">注销登录</a></li>
                         </ul>
                     </li>
@@ -62,9 +64,7 @@
                 <div class="form-group">
                     <input type="text" class="form-control" placeholder="茉莉蜜茶" id="searchKeyWord"/>
                 </div>
-                <c:if test="${currentUser.userDetail.role == 1}">
-                <button class="btn btn-default" onclick="searchProduct();" disabled>查找</button>
-                </c:if>
+                    <button class="btn btn-default" onclick="searchProduct();">查找</button>
             </div>
         </div>
     </div>
